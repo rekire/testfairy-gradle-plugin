@@ -1,17 +1,20 @@
 package com.testfairy.plugins.gradle
-
-import org.gradle.api.*
-import org.gradle.api.tasks.*
-import groovyx.net.http.*
-import org.apache.http.*
-import org.apache.http.impl.client.*
-import org.apache.http.client.methods.*
-import org.apache.http.entity.mime.*
-import org.apache.http.entity.mime.content.*
-import org.apache.http.util.EntityUtils
-import org.apache.commons.io.IOUtils
-import org.apache.commons.io.FilenameUtils
 import groovy.json.JsonSlurper
+import org.apache.commons.io.FilenameUtils
+import org.apache.commons.io.IOUtils
+import org.apache.http.HttpEntity
+import org.apache.http.HttpResponse
+import org.apache.http.client.methods.HttpGet
+import org.apache.http.client.methods.HttpPost
+import org.apache.http.entity.mime.MultipartEntity
+import org.apache.http.entity.mime.content.FileBody
+import org.apache.http.entity.mime.content.StringBody
+import org.apache.http.impl.client.DefaultHttpClient
+import org.apache.http.util.EntityUtils
+import org.gradle.api.GradleException
+import org.gradle.api.Plugin
+import org.gradle.api.Project
+import groovyx.net.http.*
 
 class TestFairyPlugin implements Plugin<Project> {
 
@@ -66,7 +69,7 @@ class TestFairyPlugin implements Plugin<Project> {
 									project.logger.info("Downloading instrumented APK from ${json.instrumented_url}")
 
 									String baseName = FilenameUtils.getBaseName(apkFilename)
-									def tempFilename = "/tmp/testfairy-${baseName}.apk"
+									def tempFilename = "$buildDir/apk/testfairy-${baseName}.apk"
 									downloadFile(json.instrumented_url.toString(), tempFilename.toString())
 
 									// resign using gradle build settings
@@ -203,7 +206,7 @@ class TestFairyPlugin implements Plugin<Project> {
 	 * @param sc
 	 */
 	void signApkFile(String apkFilename, sc) {
-		def command = """jarsigner -keystore ${sc.storeFile} -storepass ${sc.storePassword} ${apkFilename} ${sc.keyAlias} -verbose"""
+		def command = """jarsigner -keystore ${sc.storeFile} -storepass \"${sc.storePassword}\" ${apkFilename} ${sc.keyAlias} -verbose"""
 		def proc = command.execute()
 		proc.consumeProcessOutput()
 		proc.waitFor()
